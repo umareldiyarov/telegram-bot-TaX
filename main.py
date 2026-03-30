@@ -1,11 +1,13 @@
 from telethon import TelegramClient, events
+from telethon.sessions import StringSession
 from dotenv import load_dotenv
 import os
 import time
 import asyncio
 import hashlib
-
 from pathlib import Path
+
+# Загрузка переменных (на Railway они берутся из вкладки Variables)
 load_dotenv(Path(__file__).parent / ".env")
 
 API_ID = int(os.getenv("API_ID"))
@@ -13,9 +15,11 @@ API_HASH = os.getenv("API_HASH")
 SOURCE_GROUP = int(os.getenv("SOURCE_GROUP"))
 TARGET_GROUP = int(os.getenv("TARGET_GROUP"))
 DUPLICATE_TIME = int(os.getenv("DUPLICATE_TIME", 60))
+STRING_SESSION = os.getenv("STRING_SESSION") 
 
+# Инициализация клиента через StringSession (чтобы не просил телефон на сервере)
 client = TelegramClient(
-    "session",
+    StringSession(STRING_SESSION),
     API_ID,
     API_HASH,
     sequential_updates=False,
@@ -37,30 +41,14 @@ async def handler(event):
         return
 
     bishkek = ["бишкек", "bishkek", "биш"]
-
     issyk_kol = [
-        # основные
         "каракол", "балыкчы", "чолпон", "чолпон-ата", "чолпон ата",
-        "бостери", "боостери", "тамчы",
-
-        # север
-        "кара-ой", "кара ой", "долинка", "чок-тал", "чок тал",
-        "сары-ой", "сары ой", "орнок", "булан-соготту", "булан соготту",
-        "корумду", "темирканат", "ананьево", "тору-айгыр", "тору айгыр",
-
-        # юг
-        "боконбаево", "каджи-сай", "каджи сай", "тамга",
-        "кызыл-туу", "кызыл туу", "ак-терек", "ак терек", "тон",
-
-        # джети-огуз
-        "кызыл-суу", "кызыл суу", "покровка", "джети-огуз", "джети огуз",
-        "липенка", "саруу", "дархан",
-
-        # восток
-        "ак-суу", "ак суу", "тюп", "жыргалан", "светлая поляна",
-
-        # общее
-        "иссык", "issyk", "ыссык-кол", "ыссык-куль"
+        "бостери", "боостери", "тамчы", "кара-ой", "кара ой", "долинка", 
+        "чок-тал", "чок тал", "сары-ой", "сары ой", "орнок", "булан-соготту", 
+        "корумду", "темирканат", "ананьево", "тору-айгыр", "боконбаево", 
+        "каджи-сай", "каджи сай", "тамга", "кызыл-туу", "ак-терек", "тон",
+        "кызыл-суу", "покровка", "джети-огуз", "липенка", "саруу", "дархан",
+        "ак-суу", "тюп", "жыргалан", "иссык", "issyk", "ыссык-кол", "ыссык-куль"
     ]
 
     def contains_any(words):
@@ -77,7 +65,9 @@ async def handler(event):
 
     sent_hashes[key] = now
 
-    for k in [k for k, t in sent_hashes.items() if now - t > DUPLICATE_TIME]:
+    # Очистка старых хешей
+    to_delete = [k for k, t in sent_hashes.items() if now - t > DUPLICATE_TIME]
+    for k in to_delete:
         del sent_hashes[k]
 
     asyncio.create_task(forward(event.message))
@@ -89,8 +79,10 @@ async def forward(message):
         print(f"[ошибка]: {e}")
 
 async def main():
+    # Эта строка теперь работает молча, используя STRING_SESSION
     await client.start()
-    print("Бот запущен")
+    print("Бот успешно запущен на Railway!")
     await client.run_until_disconnected()
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
