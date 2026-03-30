@@ -78,16 +78,26 @@ async def handler(event):
 
     await asyncio.sleep(2)  # небольшая пауза перед нажатием
 
+    # ПРОРЫВ 2.0: Улучшенный кликер
     if event.message.buttons:
         for row in event.message.buttons:
             for button in row:
                 btn_text = getattr(button.button, 'text', '') or ''
                 if "позвонить" in btn_text.lower():
                     try:
+                        # Пытаемся сначала обычный клик
                         await button.click()
-                        print(f"🚀 Кнопка 'Позвонить' нажата!")
-                    except Exception as e:
-                        print(f"❌ Не удалось нажать кнопку: {e}")
+                        print(f"🚀 Обычный клик сработал!")
+                    except Exception:
+                        # Если обычный клик не прошел (это url-кнопка),
+                        # мы достаем ссылку и имитируем переход
+                        if hasattr(button.button, 'url'):
+                            url = button.button.url
+                            # Если ссылка ведет на бота, мы просто пишем боту /start с кодом
+                            if 'start=' in url:
+                                start_param = url.split('start=')[1]
+                                await client.send_message(OFFICIAL_BOT, f"/start {start_param}")
+                                print(f"📡 Отправлен прямой запрос в бота: /start {start_param}")
 
 @client.on(events.NewMessage(from_users=OFFICIAL_BOT))
 async def bot_answer_handler(event):
