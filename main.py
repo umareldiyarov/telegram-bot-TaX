@@ -16,8 +16,6 @@ TARGET_GROUP = int(os.getenv("TARGET_GROUP"))
 DUPLICATE_TIME = int(os.getenv("DUPLICATE_TIME", 60))
 STRING_SESSION = os.getenv("STRING_SESSION")
 
-OFFICIAL_BOT = 'Poputka_KG_rides_Bot'
-
 client = TelegramClient(
     StringSession(STRING_SESSION),
     API_ID,
@@ -40,7 +38,6 @@ issyk_kol = [
     "ак-суу", "тюп", "жыргалан", "иссык", "issyk", "ыссык-кол", "ыссык-куль"
 ]
 
-# Очистка старых хешей
 async def cleanup_hashes():
     while True:
         await asyncio.sleep(300)
@@ -48,8 +45,6 @@ async def cleanup_hashes():
         expired = [k for k, v in sent_hashes.items() if now - v > DUPLICATE_TIME]
         for k in expired:
             del sent_hashes[k]
-        if expired:
-            print(f"🧹 Очищено {len(expired)} старых хешей")
 
 @client.on(events.NewMessage(chats=SOURCE_GROUP))
 async def handler(event):
@@ -74,45 +69,7 @@ async def handler(event):
     sent_hashes[key] = now
 
     await client.forward_messages(TARGET_GROUP, event.message)
-    print(f"✅ Заказ переслан. Пробую нажать на кнопку...")
-
-    await asyncio.sleep(2)  # небольшая пауза перед нажатием
-
-    # ПРОРЫВ 2.0: Улучшенный кликер
-    if event.message.buttons:
-        for row in event.message.buttons:
-            for button in row:
-                btn_text = getattr(button.button, 'text', '') or ''
-                if "позвонить" in btn_text.lower():
-                    try:
-                        # Пытаемся сначала обычный клик
-                        await button.click()
-                        print(f"🚀 Обычный клик сработал!")
-                    except Exception:
-                        # Если обычный клик не прошел (это url-кнопка),
-                        # мы достаем ссылку и имитируем переход
-                        if hasattr(button.button, 'url'):
-                            url = button.button.url
-                            # Если ссылка ведет на бота, мы просто пишем боту /start с кодом
-                            if 'start=' in url:
-                                start_param = url.split('start=')[1]
-                                await client.send_message(OFFICIAL_BOT, f"/start {start_param}")
-                                print(f"📡 Отправлен прямой запрос в бота: /start {start_param}")
-
-@client.on(events.NewMessage(from_users=OFFICIAL_BOT))
-async def bot_answer_handler(event):
-    text = event.message.text  # исправлено с .message на .text
-    if not text:
-        return
-
-    print(f"📩 БОТ НАПИСАЛ: {text}")  # дебаг — видим всё что пишет бот
-
-    if "номер телефона:" in text.lower():
-        try:
-            await client.send_message(TARGET_GROUP, f"🔥 НОВЫЙ КЛИЕНТ:\n\n{text}")
-            print("✅ Номер перехвачен и отправлен в группу!")
-        except Exception as e:
-            print(f"❌ Ошибка отправки: {e}")
+    print(f"✅ Заявка переслана!")
 
 async def main():
     await client.start()
