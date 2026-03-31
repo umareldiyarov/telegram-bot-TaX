@@ -7,9 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
-from dotenv import load_dotenv
 
-load_dotenv(Path(__file__).parent / ".env")
 
 API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
@@ -71,7 +69,7 @@ async def handler(event):
 
     # 3. РАНДОМНАЯ ЗАДЕРЖКА (имитация чтения)
     # Вместо 0 секунд делаем от 10 до 25 секунд.
-    delay = random.randint(1, 5)
+    delay = random.randint(10, 25)
     
     # Запускаем отправку в фоне, чтобы не тормозить прием новых сообщений
     asyncio.create_task(copy_message(event.message, delay))
@@ -93,6 +91,7 @@ async def copy_message(message, delay):
 
 async def main():
     await client.start()
+    await client.get_dialogs() # <-- Добавь это! Прогружает чаты для безопасности
     print("🚀 Бот запущен в режиме 'НЕВИДИМКА'")
     
     # Очистка хешей раз в 10 минут
