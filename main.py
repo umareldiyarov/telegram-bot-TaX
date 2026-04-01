@@ -78,20 +78,25 @@ async def copy_message(message, delay):
     try:
         await asyncio.sleep(delay)
         
+        # 1. Извлекаем кнопки из оригинального сообщения
+        # Если кнопок нет, будет None
+        buttons = message.buttons if message.buttons else None
         
+        # 2. Отправляем как НОВОЕ сообщение (не forward)
+        # message.text копирует только текст
+        # buttons=buttons копирует те же кнопки
+        await client.send_message(
+            TARGET_GROUP,
+            message.text,
+            buttons=buttons
+        )
         
-        await client.forward_messages(
-    TARGET_GROUP,
-    message,
-    drop_author=True  # скрывает кто переслал
-)
-
-
-
-        
-        print(f"✅ Заявка скопирована (пауза {delay}с)")
+        print(f"✅ Заявка скопирована чисто (пауза {delay}с)")
     except Exception as e:
-        print(f"[ошибка]: {e}")
+        print(f"[ошибка при копировании]: {e}")
+
+
+
 
 async def main():
     await client.start()
