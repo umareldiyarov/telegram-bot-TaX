@@ -1,5 +1,4 @@
 tgcrypto
-python-dotenv
 telethon
 
 
