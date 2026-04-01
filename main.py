@@ -78,13 +78,12 @@ async def copy_message(message, delay):
     try:
         await asyncio.sleep(delay)
         
-        # 4. ОТПРАВКА ТЕКСТОМ (без плашки "Переслано")
-        # Это самое важное для защиты от админов-источников
-        await client.send_message(
-            TARGET_GROUP, 
-            message.text, 
-            buttons=message.buttons # Кнопки "Позвонить" останутся!
-        )
+        
+        
+        await client.forward_messages(
+    TARGET_GROUP,
+    message
+)
         print(f"✅ Заявка скопирована (пауза {delay}с)")
     except Exception as e:
         print(f"[ошибка]: {e}")
