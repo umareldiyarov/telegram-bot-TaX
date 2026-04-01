@@ -4,17 +4,15 @@ import asyncio
 import hashlib
 import random
 from datetime import datetime
-from pathlib import Path
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
-
 
 API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
 SOURCE_GROUP = int(os.getenv("SOURCE_GROUP"))
 TARGET_GROUP = int(os.getenv("TARGET_GROUP"))
 DUPLICATE_TIME = int(os.getenv("DUPLICATE_TIME", 60))
-STRING_SESSION = os.getenv("STRING_SESSION") 
+STRING_SESSION = os.getenv("STRING_SESSION")
 
 client = TelegramClient(
     StringSession(STRING_SESSION),
@@ -27,13 +25,12 @@ client = TelegramClient(
 
 sent_hashes = {}
 
-# Списки городов (вынесли из обработчика для скорости)
 bishkek = ["бишкек", "bishkek", "биш"]
 issyk_kol = [
     "каракол", "балыкчы", "чолпон", "чолпон-ата", "чолпон ата",
-    "бостери", "боостери", "тамчы", "кара-ой", "кара ой", "долинка", 
-    "чок-тал", "чок тал", "сары-ой", "сары ой", "орнок", "булан-соготту", 
-    "корумду", "темирканат", "ананьево", "тору-айгыр", "боконбаево", 
+    "бостери", "боостери", "тамчы", "кара-ой", "кара ой", "долинка",
+    "чок-тал", "чок тал", "сары-ой", "сары ой", "орнок", "булан-соготту",
+    "корумду", "темирканат", "ананьево", "тору-айгыр", "боконбаево",
     "каджи-сай", "каджи сай", "тамга", "кызыл-туу", "ак-терек", "тон",
     "кызыл-суу", "покровка", "джети-огуз", "липенка", "саруу", "дархан",
     "ак-суу", "тюп", "жыргалан", "иссык", "issyk", "ыссык-кол", "ыссык-куль"
@@ -41,7 +38,6 @@ issyk_kol = [
 
 @client.on(events.NewMessage(chats=SOURCE_GROUP))
 async def handler(event):
-    # 1. Симуляция "Сна" (Бот не работает с 2 до 6 утра)
     hour = datetime.now().hour
     if 2 <= hour <= 6:
         return
@@ -60,41 +56,28 @@ async def handler(event):
     if not (contains_any(bishkek) and contains_any(issyk_kol)):
         return
 
-    # 2. Проверка дублей
     key = hashlib.md5(text.encode()).hexdigest()
     now = time.time()
     if key in sent_hashes and now - sent_hashes[key] < DUPLICATE_TIME:
         return
     sent_hashes[key] = now
 
-    # 3. РАНДОМНАЯ ЗАДЕРЖКА (имитация чтения)
-    # Вместо 0 секунд делаем от 10 до 25 секунд.
-    delay = random.randint(10, 25)
-    
-    # Запускаем отправку в фоне, чтобы не тормозить прием новых сообщений
-    asyncio.create_task(copy_message(event.message, delay))
+    delay = random.randint(10, 45)
+    asyncio.create_task(forward(event.message, delay))
 
-async def copy_message(message, delay):
+async def forward(message, delay):
     try:
         await asyncio.sleep(delay)
-        await client.forward_messages(
-            TARGET_GROUP,
-            message,
-            drop_author=True
-        )
-        print(f"✅ Заявка переслана (пауза {delay}с)")
+        await client.forward_messages(TARGET_GROUP, message)
+        print(f"✅ Переслано (пауза {delay}с)")
     except Exception as e:
         print(f"[ошибка]: {e}")
 
-
-
-
 async def main():
     await client.start()
-    await client.get_dialogs() # <-- Добавь это! Прогружает чаты для безопасности
-    print("🚀 Бот запущен в режиме 'НЕВИДИМКА'")
-    
-    # Очистка хешей раз в 10 минут
+    await client.get_dialogs()
+    print("🚀 Бот запущен!")
+
     async def cleanup():
         while True:
             await asyncio.sleep(600)
@@ -102,7 +85,7 @@ async def main():
             expired = [k for k, t in sent_hashes.items() if now - t > DUPLICATE_TIME]
             for k in expired:
                 del sent_hashes[k]
-    
+
     asyncio.create_task(cleanup())
     await client.run_until_disconnected()
 
