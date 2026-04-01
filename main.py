@@ -82,8 +82,13 @@ async def copy_message(message, delay):
         
         await client.forward_messages(
     TARGET_GROUP,
-    message
+    message,
+    drop_author=True  # скрывает кто переслал
 )
+
+
+
+        
         print(f"✅ Заявка скопирована (пауза {delay}с)")
     except Exception as e:
         print(f"[ошибка]: {e}")
