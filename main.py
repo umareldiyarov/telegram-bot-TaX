@@ -3,6 +3,7 @@ import time
 import asyncio
 import hashlib
 import random
+import zoneinfo
 from datetime import datetime
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
@@ -38,8 +39,8 @@ issyk_kol = [
 
 @client.on(events.NewMessage(chats=SOURCE_GROUP))
 async def handler(event):
-    hour = datetime.now().hour
-    if 2 <= hour <= 6:
+    hour = datetime.now(zoneinfo.ZoneInfo("Asia/Bishkek")).hour
+    if 2 <= hour < 6:  # Также исправил <= 6 на < 6, чтобы бот просыпался ровно в 6:00
         return
 
     text = event.message.text
@@ -62,7 +63,7 @@ async def handler(event):
         return
     sent_hashes[key] = now
 
-    delay = random.randint(10, 45)
+    delay = random.randint(1, 7)
     asyncio.create_task(forward(event.message, delay))
 
 async def forward(message, delay):
